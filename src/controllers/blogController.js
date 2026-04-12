@@ -1,15 +1,19 @@
 import Blog from "../models/Blog.js";
-import slugify from "slugify";
 
 export const createBlog = async (req, res) => {
   try {
-    const { title, excerpt, category, readTime, image, content, date } = req.body;
+    const { title, excerpt, category, readTime, content, date } = req.body;
 
-    const slug = slugify(title, { lower: true });
+    let image = "";
+
+    if (req.file) {
+      image = req.file.filename;
+    } else if (req.body.image) {
+      image = req.body.image;
+    }
 
     const blog = await Blog.create({
       title,
-      slug,
       excerpt,
       category,
       readTime,
@@ -20,6 +24,7 @@ export const createBlog = async (req, res) => {
 
     res.status(201).json(blog);
   } catch (error) {
+    console.log("ERROR:", error); // 👈 VERY IMPORTANT
     res.status(500).json({ message: error.message });
   }
 };

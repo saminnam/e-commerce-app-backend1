@@ -60,14 +60,17 @@ const blogSchema = new mongoose.Schema(
       default: "published",
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-blogSchema.pre("save", function (next) {
+// ✅ FIXED HERE
+blogSchema.pre("save", function () {
   if (this.title) {
-    this.slug = slugify(this.title, { lower: true, strict: true });
+    this.slug =
+      slugify(this.title, { lower: true, strict: true }) +
+      "-" +
+      Date.now();
   }
-  next();
 });
 
 const Blog = mongoose.model("Blog", blogSchema);
