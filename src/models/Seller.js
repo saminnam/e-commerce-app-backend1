@@ -13,6 +13,7 @@ const sellerSchema = new mongoose.Schema({
   accountNumber: String,
   ifsc: String,
   category: String,
+  isVerified: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 

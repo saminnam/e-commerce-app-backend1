@@ -16,8 +16,7 @@ const orderSchema = new mongoose.Schema(
 
     products: [
       {
-        productId: { type: String, required: true },
-        productName: { type: String, required: true },
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
       },
@@ -33,6 +32,11 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Add indexes for frequently queried fields
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ status: 1 });
+orderSchema.index({ "customer.email": 1 });
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;

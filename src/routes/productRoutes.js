@@ -1,5 +1,5 @@
 import express from "express";
-import Product from "../models/product.js";
+import Product from "../models/Product.js";
 
 const router = express.Router();
 
@@ -13,11 +13,28 @@ router.post("/", async (req, res) => {
   }
 });
 
-// GET ALL PRODUCTS
+// GET ALL PRODUCTS (with pagination)
 router.get("/", async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
-    res.json(products);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const total = await Product.countDocuments();
+    
+    res.json({
+      products,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -75,13 +75,11 @@ router.patch("/status/:id", async (req, res) => {
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Send confirmation email
-    try {
-      await sendStatusEmail(order.customer.email, status, order._id);
-    } catch (mailError) {
+    // Send confirmation email asynchronously (non-blocking)
+    sendStatusEmail(order.customer.email, status, order._id).catch((mailError) => {
       console.error("Email sending failed:", mailError);
       // We don't return error here so the status update still saves
-    }
+    });
 
     res.json(order);
   } catch (error) {

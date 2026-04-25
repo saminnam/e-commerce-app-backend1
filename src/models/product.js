@@ -5,6 +5,7 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     image: { type: String, required: true },
+    categoryImage: { type: String },
     images: [{ type: String }],
     mrp: { type: Number, required: true },
     price: { type: Number, required: true },
@@ -22,6 +23,13 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Add indexes for frequently queried fields
+productSchema.index({ slug: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ status: 1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ price: 1 });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;
