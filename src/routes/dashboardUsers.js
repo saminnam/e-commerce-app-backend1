@@ -7,7 +7,7 @@ const router = express.Router();
 
 // CREATE USER
 router.post("/", async (req, res) => {
-  const { name, email, phone, password, role, status } = req.body;
+  const { name, email, phone, password, role, status, permissions } = req.body;
 
   if (!name || !email || !phone || !password) {
     return res.status(400).json({ message: "All fields are required" });
@@ -28,6 +28,7 @@ router.post("/", async (req, res) => {
       password: hashedPassword,
       role: role || "admin",
       status: status || "active",
+      permissions: permissions || [],
     });
 
     res.status(201).json({ message: "User created successfully", user });
@@ -61,11 +62,11 @@ router.delete("/:id", async (req, res) => {
 // UPDATE USER
 router.put("/:id", async (req, res) => {
   try {
-    const { name, email, phone, role, status } = req.body;
+    const { name, email, phone, role, status, permissions } = req.body;
     
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name, email, phone, role, status },
+      { name, email, phone, role, status, permissions },
       { new: true, runValidators: true }
     ).select("-password");
     
@@ -126,7 +127,8 @@ router.post("/login", async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role || "admin",
-        status: user.status
+        status: user.status,
+        permissions: user.permissions || []
       },
     });
   } catch (error) {

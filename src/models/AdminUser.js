@@ -8,6 +8,10 @@ const adminUserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: { type: String, default: "admin" },
     status: { type: String, default: "active" },
+    permissions: { 
+      type: [String], 
+      default: [] 
+    },
   },
   { timestamps: true }
 );

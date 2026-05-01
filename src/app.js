@@ -44,6 +44,14 @@ app.use(compression());
 // Exclude auth routes from rate limiting
 app.use('/api/auth', (req, res, next) => next());
 
+// Exclude admin routes from rate limiting for development
+app.use('/api/admin-users', (req, res, next) => next());
+
+// Exclude products, cart, and profile routes from rate limiting for development
+app.use('/api/products', (req, res, next) => next());
+app.use('/api/cart', (req, res, next) => next());
+app.use('/api/profile', (req, res, next) => next());
+
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
