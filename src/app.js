@@ -30,11 +30,25 @@ connectDB();
 const app = express();
 
 // ✅ Single CORS configuration
+// app.use(
+//   cors({
+//     origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+//     methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
-    methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
+    // Removed the trailing slash at the end of the URL
+    origin: [
+  'https://e-commerce-app-admin-fawn.vercel.app', 
+  'https://e-commerce-app-frontend-opal.vercel.app' // Removed the trailing slash here!
+],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
+    // Added this to ensure preflight requests (OPTIONS) pass smoothly
+    optionsSuccessStatus: 200 
   })
 );
 
