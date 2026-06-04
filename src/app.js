@@ -6,6 +6,9 @@ import connectDB from "./config/db.js";
 import bcrypt from "bcryptjs";
 import adminUser from "./models/AdminUser.js";
 import adminUserRoutes from "./routes/dashboardUsers.js";
+import roleRoutes from "./routes/roleRoutes.js";
+import heroSlideRoutes from "./routes/heroSlideRoutes.js";
+import offerHeroSlideRoutes from "./routes/offerHeroSlideRoutes.js";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 
@@ -29,7 +32,7 @@ const app = express();
 // ✅ Single CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
     methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
     credentials: true,
   })
@@ -47,10 +50,11 @@ app.use('/api/auth', (req, res, next) => next());
 // Exclude admin routes from rate limiting for development
 app.use('/api/admin-users', (req, res, next) => next());
 
-// Exclude products, cart, and profile routes from rate limiting for development
+// Exclude products, cart, profile, and roles routes from rate limiting for development
 app.use('/api/products', (req, res, next) => next());
 app.use('/api/cart', (req, res, next) => next());
 app.use('/api/profile', (req, res, next) => next());
+app.use('/api/roles', (req, res, next) => next());
 
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
@@ -90,6 +94,9 @@ createAdmin();
 
 // ROUTES
 app.use("/api/admin-users", adminUserRoutes);
+app.use("/api/roles", roleRoutes);
+app.use("/api/hero-slides", heroSlideRoutes);
+app.use("/api/offer-hero-slides", offerHeroSlideRoutes);
 
 app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);

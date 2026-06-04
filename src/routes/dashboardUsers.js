@@ -2,12 +2,13 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/AdminUser.js";
+import Role from "../models/Role.js";
 
 const router = express.Router();
 
 // CREATE USER
 router.post("/", async (req, res) => {
-  const { name, email, phone, password, role, status, permissions } = req.body;
+  const { name, email, phone, password, role, status } = req.body;
 
   if (!name || !email || !phone || !password) {
     return res.status(400).json({ message: "All fields are required" });
@@ -26,9 +27,8 @@ router.post("/", async (req, res) => {
       email,
       phone,
       password: hashedPassword,
-      role: role || "admin",
+      role: role || null,
       status: status || "active",
-      permissions: permissions || [],
     });
 
     res.status(201).json({ message: "User created successfully", user });
@@ -41,7 +41,7 @@ router.post("/", async (req, res) => {
 // GET USERS
 router.get("/", async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find().populate('role').select("-password");
     res.json(users);
   } catch (error) {
     console.error("Fetch error:", error);
@@ -62,13 +62,13 @@ router.delete("/:id", async (req, res) => {
 // UPDATE USER
 router.put("/:id", async (req, res) => {
   try {
-    const { name, email, phone, role, status, permissions } = req.body;
+    const { name, email, phone, role, status } = req.body;
     
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name, email, phone, role, status, permissions },
+      { name, email, phone, role, status },
       { new: true, runValidators: true }
-    ).select("-password");
+    ).populate('role').select("-password");
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -92,7 +92,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate('role');
     if (!user) {
       console.log("User not found for email:", email);
       return res.status(400).json({ message: "Invalid credentials" });
@@ -111,7 +111,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role || "admin" },
+      { id: user._id, email: user.email, role: user.role?.name || "admin" },
       process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "7d" }
     );
@@ -126,9 +126,10 @@ router.post("/login", async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role || "admin",
+        role: user.role?.name || "admin",
+        roleId: user.role?._id || null,
         status: user.status,
-        permissions: user.permissions || []
+        permissions: user.role?.permissions || []
       },
     });
   } catch (error) {
