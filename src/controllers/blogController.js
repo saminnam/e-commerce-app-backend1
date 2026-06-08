@@ -64,21 +64,41 @@ export const getSingleBlog = async (req, res) => {
 
 export const updateBlog = async (req, res) => {
   try {
+    // Check if blog exists first
+    const existingBlog = await Blog.findById(req.params.id);
+    if (!existingBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
     const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
+      runValidators: true,
     });
 
     res.json(blog);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Blog Update Error:", error.message);
+    res.status(500).json({ 
+      message: error.message,
+      errorType: error.name 
+    });
   }
 };
 
 export const deleteBlog = async (req, res) => {
   try {
-    await Blog.findByIdAndDelete(req.params.id);
-    res.json({ message: "Blog deleted successfully" });
+    const blog = await Blog.findByIdAndDelete(req.params.id);
+    
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    
+    res.json({ message: "Blog deleted successfully", deletedBlog: blog });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Blog Delete Error:", error.message);
+    res.status(500).json({ 
+      message: error.message,
+      errorType: error.name 
+    });
   }
 };

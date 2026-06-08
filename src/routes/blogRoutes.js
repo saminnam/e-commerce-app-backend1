@@ -7,9 +7,15 @@ import { createBlog, getBlogs, getSingleBlog, updateBlog, deleteBlog } from "../
 const router = express.Router();
 
 // The order MUST be: Auth -> Multer -> Controller
-// If you don't want to require login, remove verifyToken
 router.post("/", upload.single("image"), async (req, res) => {
   try {
+    // Validate required fields before processing
+    if (!req.body.title || !req.body.content) {
+      return res.status(400).json({ 
+        message: "Title and content are required" 
+      });
+    }
+
     // Get the base URL dynamically from the request
     const protocol = req.protocol;
     const host = req.get("host");
@@ -17,20 +23,33 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     // If req.file exists, the user uploaded a file.
     // If not, we take the URL string from req.body.image.
-    const imagePath = req.file 
-      ? `${baseUrl}/uploads/${req.file.filename}` 
-      : req.body.image;
+    let imagePath = req.body.image || "";
+    if (req.file) {
+      imagePath = `${baseUrl}/uploads/${req.file.filename}`;
+    }
 
     const newBlog = new Blog({
-      ...req.body,
-      image: imagePath // This saves the usable URL to the database
+      title: req.body.title,
+      excerpt: req.body.excerpt || "",
+      category: req.body.category || "",
+      readTime: req.body.readTime || "5 min read",
+      image: imagePath,
+      content: req.body.content,
+      date: req.body.date || new Date().toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+      }),
     });
 
-    await newBlog.save();
-    res.status(201).json(newBlog);
+    const savedBlog = await newBlog.save();
+    res.status(201).json(savedBlog);
   } catch (err) {
-    console.error("Blog creation error:", err); // Log detailed error
-    res.status(500).json({ message: err.message });
+    console.error("Blog creation error:", err.message);
+    console.error("Full error:", err);
+    res.status(500).json({ 
+      message: err.message || "Failed to create blog",
+      errorType: err.name
+    });
   }
 }); 
 
