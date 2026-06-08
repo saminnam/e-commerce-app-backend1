@@ -28,7 +28,10 @@ dotenv.config();
 connectDB();
 
 const app = express();
-
+const allowedOrigins = [
+  'https://e-commerce-app-admin-snowy.vercel.app',
+  'http://localhost:5173'
+];
 // ✅ Single CORS configuration
 // app.use(
 //   cors({
@@ -39,17 +42,21 @@ const app = express();
 // );
 
 app.use(cors({
-  origin: [
-    'https://e-commerce-app-admin-snowy.vercel.app', // Your production Vercel frontend
-    'http://localhost:5173',                         // Your local development port
-    'http://localhost:3000'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Handle preflight options requests globally
+// Automatically respond to preflight OPTIONS requests across all routes
 app.options('*', cors());
 
 app.use(express.json({ limit: '50mb' }));
