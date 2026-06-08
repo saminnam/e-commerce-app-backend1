@@ -28,28 +28,29 @@ dotenv.config();
 connectDB();
 
 const app = express();
-const allowedOrigins = [
-  'https://e-commerce-app-admin-snowy.vercel.app',
-  'http://localhost:5173'
-];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// ✅ Single CORS configuration
+// app.use(
+//   cors({
+//     origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+//     methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
+//     credentials: true,
+//   })
+// );
 
-// Automatically respond to preflight OPTIONS requests across all routes
-app.options('*', cors());
+app.use(
+  cors({
+    // Removed the trailing slash at the end of the URL
+    origin: [
+  'https://e-commerce-app-admin-snowy.vercel.app/', 
+  'https://e-commerce-app-frontend-opal.vercel.app' // Removed the trailing slash here!
+],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
+    // Added this to ensure preflight requests (OPTIONS) pass smoothly
+    optionsSuccessStatus: 200 
+  })
+);
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
