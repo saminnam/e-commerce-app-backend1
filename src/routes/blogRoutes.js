@@ -8,13 +8,17 @@ const router = express.Router();
 
 // The order MUST be: Auth -> Multer -> Controller
 // If you don't want to require login, remove verifyToken
-// router.post("/", upload.single("image"), createBlog);
 router.post("/", upload.single("image"), async (req, res) => {
   try {
+    // Get the base URL dynamically from the request
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
     // If req.file exists, the user uploaded a file.
     // If not, we take the URL string from req.body.image.
     const imagePath = req.file 
-      ? `http://localhost:5000/uploads/${req.file.filename}` 
+      ? `${baseUrl}/uploads/${req.file.filename}` 
       : req.body.image;
 
     const newBlog = new Blog({
@@ -25,6 +29,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     await newBlog.save();
     res.status(201).json(newBlog);
   } catch (err) {
+    console.error("Blog creation error:", err); // Log detailed error
     res.status(500).json({ message: err.message });
   }
 }); 

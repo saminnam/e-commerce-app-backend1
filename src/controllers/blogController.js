@@ -4,6 +4,14 @@ export const createBlog = async (req, res) => {
   try {
     const { title, excerpt, category, readTime, content, date } = req.body;
 
+    // Validate required fields
+    if (!title || !content) {
+      return res.status(400).json({ 
+        message: "Title and content are required",
+        received: { title, content }
+      });
+    }
+
     let image = "";
 
     if (req.file) {
@@ -24,8 +32,12 @@ export const createBlog = async (req, res) => {
 
     res.status(201).json(blog);
   } catch (error) {
-    console.log("ERROR:", error); // 👈 VERY IMPORTANT
-    res.status(500).json({ message: error.message });
+    console.error("Blog Creation Error:", error.message);
+    console.error("Full Error:", error);
+    res.status(500).json({ 
+      message: error.message,
+      errorType: error.name 
+    });
   }
 };
 
