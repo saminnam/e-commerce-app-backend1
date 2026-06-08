@@ -24,7 +24,7 @@ import cartRoutes from "./routes/cartRoutes.js";
 // AUTH ROUTES
 import profileRoutes from "./routes/profileRoutes.js";
 
-dotenv.config();
+dotenv.config();  
 connectDB();
 
 const app = express();
