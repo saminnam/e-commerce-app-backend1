@@ -43,7 +43,7 @@ app.use(
     // Removed the trailing slash at the end of the URL
     origin: [
   'https://e-commerce-app-admin-snowy.vercel.app/', 
-  'https://e-commerce-app-three-lime.vercel.app/' // Removed the trailing slash here!
+  'https://e-commerce-app-frontend-opal.vercel.app' // Removed the trailing slash here!
 ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
