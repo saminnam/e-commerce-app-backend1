@@ -14,7 +14,7 @@ import rateLimit from "express-rate-limit";
 
 // USER SIDE ROUTES
 import authRoutes from "./routes/authRoutes.js";
-import productRoutes from "./routes/productRoutes.js";
+import productRoutes from "./src/routes/profileRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import sellerRoutes from "./routes/sellerRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
