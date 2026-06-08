@@ -32,14 +32,6 @@ const allowedOrigins = [
   'https://e-commerce-app-admin-snowy.vercel.app',
   'http://localhost:5173'
 ];
-// ✅ Single CORS configuration
-// app.use(
-//   cors({
-//     origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
-//     methods: ["GET", "POST", "PUT","PATCH", "DELETE"],
-//     credentials: true,
-//   })
-// );
 
 app.use(cors({
   origin: function (origin, callback) {
