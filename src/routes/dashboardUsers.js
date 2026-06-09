@@ -31,7 +31,11 @@ router.post("/", async (req, res) => {
       status: status || "active",
     });
 
-    res.status(201).json({ message: "User created successfully", user });
+    // Security Fix: Do not return the hashed password in the response object
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(201).json({ message: "User created successfully", user: userResponse });
   } catch (error) {
     console.error("Create error:", error);
     res.status(500).json({ message: "Server error" });
@@ -41,7 +45,8 @@ router.post("/", async (req, res) => {
 // GET USERS
 router.get("/", async (req, res) => {
   try {
-    const users = await User.find().populate('role').select("-password");
+    // Optimization: Added .lean() for faster execution and less memory overhead
+    const users = await User.find().populate('role').select("-password").lean();
     res.json(users);
   } catch (error) {
     console.error("Fetch error:", error);
@@ -52,9 +57,13 @@ router.get("/", async (req, res) => {
 // DELETE USER
 router.delete("/:id", async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.json({ message: "User deleted" });
   } catch (error) {
+    console.error("Delete error:", error);
     res.status(500).json({ message: "Delete failed" });
   }
 });
@@ -62,11 +71,19 @@ router.delete("/:id", async (req, res) => {
 // UPDATE USER
 router.put("/:id", async (req, res) => {
   try {
-    const { name, email, phone, role, status } = req.body;
+    const { name, email, phone, role, status, password } = req.body;
+    
+    // Build update object dynamically
+    const updateData = { name, email, phone, role, status };
+
+    // Enhancement: Securely hash password if the client tries to update it
+    if (password && password.trim() !== "") {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
     
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name, email, phone, role, status },
+      updateData,
       { new: true, runValidators: true }
     ).populate('role').select("-password");
     
@@ -108,6 +125,11 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       console.log("Password mismatch for email:", email);
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Safety Alert: Warn developer if your .env file isn't injecting properly
+    if (!process.env.JWT_SECRET) {
+      console.warn("WARNING: JWT_SECRET is not defined in environment variables. Falling back to default string.");
     }
 
     const token = jwt.sign(
