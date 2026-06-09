@@ -1,7 +1,6 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose"; // 🛑 ADDED: For ObjectId validation
 import User from "../models/AdminUser.js";
 import Role from "../models/Role.js";
 
@@ -16,32 +15,23 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
-    }
-
-    // Validate role format if provided
-    if (role && !mongoose.Types.ObjectId.isValid(role)) {
-      return res.status(400).json({ message: "Invalid role ID format" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
-      email: email.toLowerCase().trim(), // 🛑 FIX: Prevent casing duplicate issues (e.g., Admin@vs admin@)
+      email,
       phone,
       password: hashedPassword,
       role: role || null,
       status: status || "active",
     });
 
-    // Strip password from the response object
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.status(201).json({ message: "User created successfully", user: userResponse });
+    res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
     console.error("Create error:", error);
     res.status(500).json({ message: "Server error" });
@@ -62,16 +52,7 @@ router.get("/", async (req, res) => {
 // DELETE USER
 router.delete("/:id", async (req, res) => {
   try {
-    // 🛑 FIX: Validate ID format to prevent Mongoose CastError crash
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: "Invalid user ID format" });
-    }
-
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
-    if (!deletedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
+    await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User deleted" });
   } catch (error) {
     res.status(500).json({ message: "Delete failed" });
@@ -81,29 +62,11 @@ router.delete("/:id", async (req, res) => {
 // UPDATE USER
 router.put("/:id", async (req, res) => {
   try {
-    // 🛑 FIX: Validate ID format
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: "Invalid user ID format" });
-    }
-
     const { name, email, phone, role, status } = req.body;
     
-    // Build explicit update payload to prevent accidental field clearing
-    const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email.toLowerCase().trim();
-    if (phone !== undefined) updateData.phone = phone;
-    if (role !== undefined) {
-      if (role && !mongoose.Types.ObjectId.isValid(role)) {
-        return res.status(400).json({ message: "Invalid role ID format" });
-      }
-      updateData.role = role || null;
-    }
-    if (status !== undefined) updateData.status = status;
-
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { $set: updateData }, // 🛑 FIX: Use explicit $set operation
+      { name, email, phone, role, status },
       { new: true, runValidators: true }
     ).populate('role').select("-password");
     
@@ -114,7 +77,7 @@ router.put("/:id", async (req, res) => {
     res.json({ message: "User updated successfully", user });
   } catch (error) {
     console.error("Update error:", error);
-    res.status(500).json({ message: error.code === 11000 ? "Email already in use" : "Update failed" });
+    res.status(500).json({ message: "Update failed" });
   }
 });
 
@@ -123,17 +86,19 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("Login attempt for email:", email);
+
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // 🛑 FIX: Query with lowercased/trimmed email
-    const sanitizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: sanitizedEmail }).populate('role');
-    
+    const user = await User.findOne({ email }).populate('role');
     if (!user) {
+      console.log("User not found for email:", email);
       return res.status(400).json({ message: "Invalid credentials" });
     }
+
+    console.log("User found:", user.email, "Status:", user.status);
 
     if (user.status === "inactive") {
       return res.status(403).json({ message: "Account is inactive. Please contact administrator." });
@@ -141,21 +106,17 @@ router.post("/login", async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log("Password mismatch for email:", email);
       return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    // 🛑 SECURITY FIX: Fallback safely if JWT_SECRET isn't picked up by dotenv
-    const secretKey = process.env.JWT_SECRET;
-    if (!secretKey) {
-      console.error("CRITICAL ERROR: JWT_SECRET environment variable is not defined!");
-      return res.status(500).json({ message: "Internal server configuration error" });
     }
 
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role?.name || "admin" },
-      secretKey,
+      process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "7d" }
     );
+
+    console.log("Login successful for:", user.email);
 
     res.json({
       message: "Login successful",
