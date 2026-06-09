@@ -15,7 +15,7 @@ router.post("/", async (req, res) => {
 
 // GET ALL PRODUCTS (with pagination)
 router.get("/", async (req, res) => {
-  res.json({ message: "This route is under construction" });
+  
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
