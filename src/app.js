@@ -28,15 +28,13 @@ const app = express();
 // ✅ Single CORS configuration
 app.use(
   cors({
-    // Removed the trailing slash at the end of the URL
     origin: [
-  'https://e-commerce-app-admin-snowy.vercel.app/', 
-  'https://e-commerce-app-frontend-opal.vercel.app' // Removed the trailing slash here!
-],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      'https://e-commerce-app-admin-snowy.vercel.app', // FIXED: Removed trailing slash
+      'https://e-commerce-app-frontend-opal.vercel.app'
+    ],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // Added OPTIONS explicitly
     credentials: true,
-    // Added this to ensure preflight requests (OPTIONS) pass smoothly
-    optionsSuccessStatus: 200 
+    optionsSuccessStatus: 200 // Essential for older browsers/legacy clients
   })
 );
 
