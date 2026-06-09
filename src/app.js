@@ -14,7 +14,7 @@ import rateLimit from "express-rate-limit";
 
 // USER SIDE ROUTES
 import authRoutes from "./routes/authRoutes.js";
-import productRoutes from "./routes/profileRoutes.js";
+import productRoutes from "./routes/productRoutes.js"; // 🛑 FIXED: Pointed to productRoutes instead of profileRoutes
 import orderRoutes from "./routes/orderRoutes.js";
 import sellerRoutes from "./routes/sellerRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
@@ -23,6 +23,10 @@ import cartRoutes from "./routes/cartRoutes.js";
 
 // AUTH ROUTES
 import profileRoutes from "./routes/profileRoutes.js";
+
+// MIDDLEWARE
+// 🛑 FIXED: Make sure to import your verifyToken middleware here. Update the path if yours is different!
+import { verifyToken } from "./middleware/authMiddleware.js"; 
 
 dotenv.config();  
 connectDB();
@@ -52,11 +56,7 @@ app.use(compression());
 
 // Exclude auth routes from rate limiting
 app.use('/api/auth', (req, res, next) => next());
-
-// Exclude admin routes from rate limiting for development
 app.use('/api/admin-users', (req, res, next) => next());
-
-// Exclude products, cart, profile, and roles routes from rate limiting for development
 app.use('/api/products', (req, res, next) => next());
 app.use('/api/cart', (req, res, next) => next());
 app.use('/api/profile', (req, res, next) => next());
@@ -65,7 +65,7 @@ app.use('/api/roles', (req, res, next) => next());
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // increased limit for better user experience
+  max: 200, 
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', limiter);
@@ -98,22 +98,34 @@ const createAdmin = async () => {
 
 createAdmin();
 
-// ROUTES
+// Static folders
+app.use("/uploads", express.static("uploads"));
+
+// =========================================================
+// 1. PUBLIC ROUTES (Accessible without logging in)
+// =========================================================
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes); // Users can look at products freely!
+app.use("/api/blogs", blogRoutes);       // Anyone can read your blogs
+app.use("/api/contact", contactRoutes);   // Contact form should be open
+
+// =========================================================
+// 2. PROTECTED ROUTES (Requires validation token)
+// =========================================================
+// Putting verifyToken here shields only the routes listed underneath it
+app.use(verifyToken); 
+
 app.use("/api/admin-users", adminUserRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/hero-slides", heroSlideRoutes);
 app.use("/api/offer-hero-slides", offerHeroSlideRoutes);
-
-app.use("/uploads", express.static("uploads"));
-app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
-app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/seller", sellerRoutes);
-app.use("/api/contact", contactRoutes);
-app.use("/api/blogs", blogRoutes);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+// =========================================================
+
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server running on port ${process.env.PORT || 5000}`);
 });
