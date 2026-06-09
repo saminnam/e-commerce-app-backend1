@@ -30,6 +30,11 @@ connectDB();
 
 const app = express();
 
+// --- FIX FOR express-rate-limit VALIDATION ERROR ---
+// This tells Express to trust the proxy headers Vercel passes along.
+app.set('trust proxy', 1); 
+// ---------------------------------------------------
+
 app.use(
   cors({
     origin: [
@@ -105,14 +110,13 @@ app.use("/uploads", express.static("uploads"));
 // 1. PUBLIC ROUTES (Accessible without logging in)
 // =========================================================
 app.use("/api/auth", authRoutes);
-app.use("/api/products", productRoutes); // Users can look at products freely!
-app.use("/api/blogs", blogRoutes);       // Anyone can read your blogs
-app.use("/api/contact", contactRoutes);   // Contact form should be open
+app.use("/api/products", productRoutes); 
+app.use("/api/blogs", blogRoutes);       
+app.use("/api/contact", contactRoutes);  
 
 // =========================================================
 // 2. PROTECTED ROUTES (Requires validation token)
 // =========================================================
-// Putting verifyToken here shields only the routes listed underneath it
 app.use(verifyToken); 
 
 app.use("/api/admin-users", adminUserRoutes);
