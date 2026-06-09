@@ -14,7 +14,7 @@ import rateLimit from "express-rate-limit";
 
 // USER SIDE ROUTES
 import authRoutes from "./routes/authRoutes.js";
-import productRoutes from "./routes/productRoutes.js"; // 🛑 FIXED: Pointed to productRoutes instead of profileRoutes
+import productRoutes from "./routes/productRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import sellerRoutes from "./routes/sellerRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
@@ -23,10 +23,6 @@ import cartRoutes from "./routes/cartRoutes.js";
 
 // AUTH ROUTES
 import profileRoutes from "./routes/profileRoutes.js";
-
-// MIDDLEWARE
-// 🛑 FIXED: Make sure to import your verifyToken middleware here. Update the path if yours is different!
-import { verifyToken } from "./middleware/authMiddleware.js"; 
 
 dotenv.config();  
 connectDB();
@@ -56,7 +52,11 @@ app.use(compression());
 
 // Exclude auth routes from rate limiting
 app.use('/api/auth', (req, res, next) => next());
+
+// Exclude admin routes from rate limiting for development
 app.use('/api/admin-users', (req, res, next) => next());
+
+// Exclude products, cart, profile, and roles routes from rate limiting for development
 app.use('/api/products', (req, res, next) => next());
 app.use('/api/cart', (req, res, next) => next());
 app.use('/api/profile', (req, res, next) => next());
@@ -65,7 +65,7 @@ app.use('/api/roles', (req, res, next) => next());
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, 
+  max: 200, // increased limit for better user experience
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', limiter);
@@ -97,7 +97,6 @@ const createAdmin = async () => {
 };
 
 createAdmin();
-
 // Static folders
 app.use("/uploads", express.static("uploads"));
 
@@ -124,8 +123,6 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/seller", sellerRoutes);
 
-// =========================================================
-
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`Server running on port ${process.env.PORT || 5000}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 });
