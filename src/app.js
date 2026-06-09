@@ -6,13 +6,8 @@ import connectDB from "./config/db.js";
 import bcrypt from "bcryptjs";
 import adminUser from "./models/AdminUser.js";
 import adminUserRoutes from "./routes/dashboardUsers.js";
-import roleRoutes from "./routes/roleRoutes.js";
-import heroSlideRoutes from "./routes/heroSlideRoutes.js";
-import verifyToken from "./middleware/authMiddleware.js";
-import offerHeroSlideRoutes from "./routes/offerHeroSlideRoutes.js";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
-
 // USER SIDE ROUTES
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -25,28 +20,23 @@ import cartRoutes from "./routes/cartRoutes.js";
 // AUTH ROUTES
 import profileRoutes from "./routes/profileRoutes.js";
 
-dotenv.config();  
+dotenv.config();
 connectDB();
 
 const app = express();
 
-// --- FIX FOR express-rate-limit VALIDATION ERROR ---
-// This tells Express to trust the proxy headers Vercel passes along.
-app.set('trust proxy', 1); 
-// ---------------------------------------------------
-
+// ✅ Single CORS configuration
 app.use(
   cors({
+    // Removed the trailing slash at the end of the URL
     origin: [
-      'https://e-commerce-app-admin-snowy.vercel.app',
-      'https://e-commerce-app-frontend-opal.vercel.app',
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:5174',
-    ],
+  'https://e-commerce-app-admin-snowy.vercel.app/', 
+  'https://e-commerce-app-frontend-opal.vercel.app' // Removed the trailing slash here!
+],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    // Added this to ensure preflight requests (OPTIONS) pass smoothly
+    optionsSuccessStatus: 200 
   })
 );
 
@@ -62,11 +52,10 @@ app.use('/api/auth', (req, res, next) => next());
 // Exclude admin routes from rate limiting for development
 app.use('/api/admin-users', (req, res, next) => next());
 
-// Exclude products, cart, profile, and roles routes from rate limiting for development
+// Exclude products, cart, and profile routes from rate limiting for development
 app.use('/api/products', (req, res, next) => next());
 app.use('/api/cart', (req, res, next) => next());
 app.use('/api/profile', (req, res, next) => next());
-app.use('/api/roles', (req, res, next) => next());
 
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
@@ -103,30 +92,19 @@ const createAdmin = async () => {
 };
 
 createAdmin();
-// Static folders
-app.use("/uploads", express.static("uploads"));
 
-// =========================================================
-// 1. PUBLIC ROUTES (Accessible without logging in)
-// =========================================================
-app.use("/api/auth", authRoutes);
-app.use("/api/products", productRoutes); 
-app.use("/api/blogs", blogRoutes);       
-app.use("/api/contact", contactRoutes);  
-
-// =========================================================
-// 2. PROTECTED ROUTES (Requires validation token)
-// =========================================================
-app.use(verifyToken); 
-
+// ROUTES
 app.use("/api/admin-users", adminUserRoutes);
-app.use("/api/roles", roleRoutes);
-app.use("/api/hero-slides", heroSlideRoutes);
-app.use("/api/offer-hero-slides", offerHeroSlideRoutes);
+
+app.use("/uploads", express.static("uploads"));
+app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/seller", sellerRoutes);
+app.use("/api/contact", contactRoutes);
+app.use("/api/blogs", blogRoutes);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
