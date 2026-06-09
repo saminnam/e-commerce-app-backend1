@@ -8,6 +8,7 @@ import adminUser from "./models/AdminUser.js";
 import adminUserRoutes from "./routes/dashboardUsers.js";
 import roleRoutes from "./routes/roleRoutes.js";
 import heroSlideRoutes from "./routes/heroSlideRoutes.js";
+import verifyToken from "./middleware/authMiddleware.js";
 import offerHeroSlideRoutes from "./routes/offerHeroSlideRoutes.js";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
