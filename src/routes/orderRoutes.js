@@ -1,5 +1,5 @@
 import express from "express";
-import Order from "../models/rder.js";
+import Order from "../models/Order.js";
 import Notification from "../models/Notification.js";
 import nodemailer from "nodemailer";
 
