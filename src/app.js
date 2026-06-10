@@ -25,7 +25,8 @@ import profileRoutes from "./routes/profileRoutes.js";
 
 dotenv.config();
 connectDB();
-
+app.use(cors());
+app.options("*", cors());
 const app = express();
 
 // ✅ Single CORS configuration
@@ -37,7 +38,8 @@ app.use(
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // Added OPTIONS explicitly
     credentials: true,
-    optionsSuccessStatus: 200 // Essential for older browsers/legacy clients
+    optionsSuccessStatus: 200 ,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
