@@ -1,5 +1,6 @@
 import express from "express";
-import Order from "../models/order.js";
+import Order from "../models/Order.js";
+import Notification from "../models/Notification.js";
 import nodemailer from "nodemailer";
 
 const router = express.Router();
@@ -22,6 +23,18 @@ router.post("/", async (req, res) => {
     });
 
     await order.save();
+
+    await Notification.create({
+      title: "New order received",
+      message: `${customer.name} placed a new order for ${products.length} item(s).`,
+      type: "order",
+      orderId: order._id.toString(),
+      metadata: {
+        customerName: customer.name,
+        totalAmount,
+        itemCount: products.length,
+      },
+    });
 
     res.status(201).json(order); // returns full order with customer info
   } catch (error) {
