@@ -18,9 +18,15 @@ const categorySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Stores uploaded image filename (served from /uploads)
+    image: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
+
 
 const Category = mongoose.model("Category", categorySchema);
 export default Category;

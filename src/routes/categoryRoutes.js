@@ -1,5 +1,6 @@
-import express from "express";
+ import express from "express";
 import Category from "../models/Category.js";
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -12,7 +13,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+// Create category (supports image upload)
+router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { name, description } = req.body;
     if (!name) {
@@ -29,6 +31,7 @@ router.post("/", async (req, res) => {
       name: name.trim(),
       slug,
       description: description || "",
+      image: req.file ? req.file.filename : "",
     });
 
     res.status(201).json(category);
@@ -37,11 +40,28 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+// Update category (supports image upload)
+router.put("/:id", upload.single("image"), async (req, res) => {
   try {
-    const updated = await Category.findByIdAndUpdate(req.params.id, req.body, {
+    const { name } = req.body;
+
+    const updatePayload = { ...req.body };
+    if (name) {
+      updatePayload.slug = name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    if (req.file) {
+      updatePayload.image = req.file.filename;
+    }
+
+    const updated = await Category.findByIdAndUpdate(req.params.id, updatePayload, {
       new: true,
     });
+
     res.json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -58,3 +78,4 @@ router.delete("/:id", async (req, res) => {
 });
 
 export default router;
+
