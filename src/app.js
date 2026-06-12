@@ -33,9 +33,7 @@ app.use(
   cors({
     origin: [
       'https://e-commerce-app-admin-alpha.vercel.app', // FIXED: Removed trailing slash
-      'https://e-commerce-app-three-lime.vercel.app',
-      'http://localhost:5174',
-      'http://localhost:5173',  
+      'https://e-commerce-app-three-lime.vercel.app', 
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // Added OPTIONS explicitly
     credentials: true,
