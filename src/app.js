@@ -32,7 +32,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      'https://e-commerce-app-admin-alpha.vercel.app/', // FIXED: Removed trailing slash
+      'https://e-commerce-app-admin-alpha.vercel.app', // FIXED: Removed trailing slash
       'https://e-commerce-app-three-lime.vercel.app',
       'http://localhost:5174',
       'http://localhost:5173',  
