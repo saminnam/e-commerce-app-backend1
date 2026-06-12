@@ -28,19 +28,23 @@ connectDB();
 const app = express();
 
 
-// ✅ Single CORS configuration
-app.use(
-  cors({
-    origin: [
-      'https://e-commerce-app-admin-alpha.vercel.app', // FIXED: Removed trailing slash
-      'https://e-commerce-app-three-lime.vercel.app', 
-    ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // Added OPTIONS explicitly
-    credentials: true,
-    optionsSuccessStatus: 200 ,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// ✅ CORS (ensure headers are present even on OPTIONS / preflight)
+const corsOptions = {
+  origin: [
+    'https://e-commerce-app-admin-alpha.vercel.app',
+    'https://e-commerce-app-three-lime.vercel.app',
+    'http://localhost:5174',
+    'http://localhost:5173',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
