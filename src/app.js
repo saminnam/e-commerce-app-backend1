@@ -33,8 +33,8 @@ const app = express();
 // ✅ CORS (ensure headers are present even on OPTIONS / preflight)
 const corsOptions = {
   origin: [
-    'https://e-commerce-app-admin-alpha.vercel.app',
-    'https://e-commerce-app-three-lime.vercel.app',
+    'https://e-commerce-app-admin-pi.vercel.app',
+    'https://e-commerce-app-gray-one.vercel.app',
     'http://localhost:5174',
     'http://localhost:5173',
   ],
