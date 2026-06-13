@@ -23,6 +23,10 @@ const offerHeroSlideSchema = new mongoose.Schema({
     type: String,
     enum: ["active", "inactive"],
     default: "active"
+  },
+  overlayColor: {
+    type: String,
+    default: "bg-[#030050db]"
   }
 }, {
   timestamps: true

@@ -13,10 +13,10 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Create category (supports image upload)
+// Create category (supports image upload OR image URL)
 router.post("/", upload.single("image"), async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, imageUrl } = req.body;
     if (!name) {
       return res.status(400).json({ message: "Category name is required" });
     }
@@ -27,11 +27,13 @@ router.post("/", upload.single("image"), async (req, res) => {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
+    const image = req.file?.filename || imageUrl || "";
+
     const category = await Category.create({
       name: name.trim(),
       slug,
       description: description || "",
-      image: req.file ? req.file.filename : "",
+      image,
     });
 
     res.status(201).json(category);
@@ -40,10 +42,10 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
-// Update category (supports image upload)
+// Update category (supports image upload OR image URL)
 router.put("/:id", upload.single("image"), async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, imageUrl } = req.body;
 
     const updatePayload = { ...req.body };
     if (name) {
@@ -56,6 +58,8 @@ router.put("/:id", upload.single("image"), async (req, res) => {
 
     if (req.file) {
       updatePayload.image = req.file.filename;
+    } else if (imageUrl) {
+      updatePayload.image = imageUrl;
     }
 
     const updated = await Category.findByIdAndUpdate(req.params.id, updatePayload, {
