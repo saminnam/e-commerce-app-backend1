@@ -83,9 +83,24 @@ router.get("/info", async (req, res) => {
 // PUT/UPDATE contact information (for admin panel)
 router.put("/info", async (req, res) => {
   try {
+    const { address, phone, email } = req.body;
+
+    // Validate required fields
+    if (!address || !phone || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+        errors: {
+          address: !address ? "Address is required" : undefined,
+          phone: !phone ? "Phone is required" : undefined,
+          email: !email ? "Email is required" : undefined,
+        },
+      });
+    }
+
     const contactInfo = await Contact.findOne();
     if (contactInfo) {
-      const updated = await Contact.findByIdAndUpdate(contactInfo._id, req.body, { new: true });
+      const updated = await Contact.findByIdAndUpdate(contactInfo._id, req.body, { new: true, runValidators: true });
       res.status(200).json({
         success: true,
         message: "Contact information updated successfully",
@@ -101,9 +116,21 @@ router.put("/info", async (req, res) => {
     }
   } catch (error) {
     console.error("Error updating contact info:", error);
+    // Return detailed validation errors if present
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: Object.keys(error.errors).reduce((acc, key) => {
+          acc[key] = error.errors[key].message;
+          return acc;
+        }, {}),
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to update contact information",
+      error: error.message,
     });
   }
 });
