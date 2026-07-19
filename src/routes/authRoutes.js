@@ -1,12 +1,14 @@
 // routes/authRoutes.js
 import express from "express";
-import { signup, login } from "../controllers/authController.js";
+import { signup, login, sendOTP, verifyOTP } from "../controllers/authController.js";
 import User from "../models/User.js";
 
 const router = express.Router();
 
 router.post("/signup", signup);
 router.post("/login", login);
+router.post("/send-otp", sendOTP);
+router.post("/verify-otp", verifyOTP);
 
 // GET ALL WEBSITE USERS
 router.get("/users", async (req, res) => {
