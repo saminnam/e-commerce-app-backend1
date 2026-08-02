@@ -46,6 +46,21 @@ router.post("/", upload.single("image"), async (req, res) => {
   } catch (err) {
     console.error("Blog creation error:", err.message);
     console.error("Full error:", err);
+    
+    // Handle duplicate slug error
+    if (err.code === 11000 && err.keyPattern?.slug) {
+      return res.status(400).json({ 
+        message: "A blog with this title already exists. Please use a different title."
+      });
+    }
+    
+    // Handle validation errors
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: Object.values(err.errors).map(e => e.message).join(', ')
+      });
+    }
+    
     res.status(500).json({ 
       message: err.message || "Failed to create blog",
       errorType: err.name

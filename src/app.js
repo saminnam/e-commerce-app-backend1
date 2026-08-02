@@ -51,6 +51,20 @@ app.options('/', cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Multer error handling middleware
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'File size exceeds 5MB limit' });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+  if (err.message && err.message.includes('Images only')) {
+    return res.status(400).json({ message: err.message });
+  }
+  next();
+});
+
 // Compression middleware to reduce response size
 app.use(compression());
 

@@ -1,4 +1,5 @@
 import express from "express";
+import upload from "../middleware/upload.js";
 import { getAllOfferHeroSlides, getOfferHeroSlideById, createOfferHeroSlide, updateOfferHeroSlide, deleteOfferHeroSlide } from "../controllers/offerHeroSlideController.js";
 
 const router = express.Router();
@@ -8,8 +9,8 @@ router.use((req, res, next) => next());
 
 router.get("/", getAllOfferHeroSlides);
 router.get("/:id", getOfferHeroSlideById);
-router.post("/", createOfferHeroSlide);
-router.put("/:id", updateOfferHeroSlide);
+router.post("/", upload.single("img"), createOfferHeroSlide);
+router.put("/:id", upload.single("img"), updateOfferHeroSlide);
 router.delete("/:id", deleteOfferHeroSlide);
 
 export default router;

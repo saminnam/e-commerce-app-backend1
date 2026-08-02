@@ -23,7 +23,24 @@ export const getHeroSlideById = async (req, res) => {
 
 export const createHeroSlide = async (req, res) => {
   try {
-    const { title, desktopImg, mobileImg, order, status } = req.body;
+    const { title, order, status, desktopImg: desktopImgUrl, mobileImg: mobileImgUrl } = req.body;
+
+    // Get the base URL dynamically from the request
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    // Handle desktop image
+    let desktopImg = desktopImgUrl || "";
+    if (req.files && req.files.desktopImg && req.files.desktopImg[0]) {
+      desktopImg = `${baseUrl}/uploads/${req.files.desktopImg[0].filename}`;
+    }
+
+    // Handle mobile image
+    let mobileImg = mobileImgUrl || "";
+    if (req.files && req.files.mobileImg && req.files.mobileImg[0]) {
+      mobileImg = `${baseUrl}/uploads/${req.files.mobileImg[0].filename}`;
+    }
 
     const slide = await HeroSlide.create({
       title,
@@ -41,7 +58,24 @@ export const createHeroSlide = async (req, res) => {
 
 export const updateHeroSlide = async (req, res) => {
   try {
-    const { title, desktopImg, mobileImg, order, status } = req.body;
+    const { title, order, status, desktopImg: desktopImgUrl, mobileImg: mobileImgUrl } = req.body;
+
+    // Get the base URL dynamically from the request
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    // Handle desktop image
+    let desktopImg = desktopImgUrl || "";
+    if (req.files && req.files.desktopImg && req.files.desktopImg[0]) {
+      desktopImg = `${baseUrl}/uploads/${req.files.desktopImg[0].filename}`;
+    }
+
+    // Handle mobile image
+    let mobileImg = mobileImgUrl || "";
+    if (req.files && req.files.mobileImg && req.files.mobileImg[0]) {
+      mobileImg = `${baseUrl}/uploads/${req.files.mobileImg[0].filename}`;
+    }
 
     const slide = await HeroSlide.findByIdAndUpdate(
       req.params.id,

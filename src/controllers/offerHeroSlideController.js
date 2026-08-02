@@ -23,7 +23,18 @@ export const getOfferHeroSlideById = async (req, res) => {
 
 export const createOfferHeroSlide = async (req, res) => {
   try {
-    const { title, subTitle, img, order, status } = req.body;
+    const { title, subTitle, order, status, img: imgUrl } = req.body;
+
+    // Get the base URL dynamically from the request
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    // Handle image
+    let img = imgUrl || "";
+    if (req.file) {
+      img = `${baseUrl}/uploads/${req.file.filename}`;
+    }
 
     const slide = await OfferHeroSlide.create({
       title,
@@ -41,7 +52,18 @@ export const createOfferHeroSlide = async (req, res) => {
 
 export const updateOfferHeroSlide = async (req, res) => {
   try {
-    const { title, subTitle, img, order, status } = req.body;
+    const { title, subTitle, order, status, img: imgUrl } = req.body;
+
+    // Get the base URL dynamically from the request
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    // Handle image
+    let img = imgUrl || "";
+    if (req.file) {
+      img = `${baseUrl}/uploads/${req.file.filename}`;
+    }
 
     const slide = await OfferHeroSlide.findByIdAndUpdate(
       req.params.id,
