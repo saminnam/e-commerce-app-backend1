@@ -23,6 +23,9 @@ export const getHeroSlideById = async (req, res) => {
 
 export const createHeroSlide = async (req, res) => {
   try {
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+
     const { title, order, status, desktopImg: desktopImgUrl, mobileImg: mobileImgUrl } = req.body;
 
     // Get the base URL dynamically from the request
@@ -42,6 +45,9 @@ export const createHeroSlide = async (req, res) => {
       mobileImg = `${baseUrl}/uploads/${req.files.mobileImg[0].filename}`;
     }
 
+    console.log("Final desktopImg:", desktopImg);
+    console.log("Final mobileImg:", mobileImg);
+
     const slide = await HeroSlide.create({
       title,
       desktopImg,
@@ -52,6 +58,8 @@ export const createHeroSlide = async (req, res) => {
 
     res.status(201).json(slide);
   } catch (error) {
+    console.error("Hero slide creation error:", error.message);
+    console.error("Full error:", error);
     res.status(500).json({ message: error.message });
   }
 };

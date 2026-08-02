@@ -23,6 +23,9 @@ export const getOfferHeroSlideById = async (req, res) => {
 
 export const createOfferHeroSlide = async (req, res) => {
   try {
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+
     const { title, subTitle, order, status, img: imgUrl } = req.body;
 
     // Get the base URL dynamically from the request
@@ -35,6 +38,8 @@ export const createOfferHeroSlide = async (req, res) => {
     if (req.file) {
       img = `${baseUrl}/uploads/${req.file.filename}`;
     }
+
+    console.log("Final img:", img);
 
     const slide = await OfferHeroSlide.create({
       title,
@@ -46,12 +51,17 @@ export const createOfferHeroSlide = async (req, res) => {
 
     res.status(201).json(slide);
   } catch (error) {
+    console.error("Offer hero slide creation error:", error.message);
+    console.error("Full error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
 export const updateOfferHeroSlide = async (req, res) => {
   try {
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+
     const { title, subTitle, order, status, img: imgUrl } = req.body;
 
     // Get the base URL dynamically from the request
@@ -64,6 +74,8 @@ export const updateOfferHeroSlide = async (req, res) => {
     if (req.file) {
       img = `${baseUrl}/uploads/${req.file.filename}`;
     }
+
+    console.log("Final img:", img);
 
     const slide = await OfferHeroSlide.findByIdAndUpdate(
       req.params.id,
@@ -77,6 +89,8 @@ export const updateOfferHeroSlide = async (req, res) => {
 
     res.json(slide);
   } catch (error) {
+    console.error("Offer hero slide update error:", error.message);
+    console.error("Full error:", error);
     res.status(500).json({ message: error.message });
   }
 };
