@@ -12,12 +12,15 @@ export const createBlog = async (req, res) => {
       });
     }
 
-    let image = "";
+    // Get the base URL dynamically from the request
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
 
+    // Handle image
+    let image = req.body.image || "";
     if (req.file) {
-      image = req.file.filename;
-    } else if (req.body.image) {
-      image = req.body.image;
+      image = `${baseUrl}/uploads/${req.file.filename}`;
     }
 
     const blog = await Blog.create({
@@ -70,7 +73,20 @@ export const updateBlog = async (req, res) => {
       return res.status(404).json({ message: "Blog not found" });
     }
 
-    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
+    // Get the base URL dynamically from the request
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    // Handle image
+    let image = req.body.image || existingBlog.image;
+    if (req.file) {
+      image = `${baseUrl}/uploads/${req.file.filename}`;
+    }
+
+    const updateData = { ...req.body, image };
+
+    const blog = await Blog.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });

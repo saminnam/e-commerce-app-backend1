@@ -1,12 +1,49 @@
 import express from "express";
 import Product from "../models/Product.js";
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
 // CREATE PRODUCT
-router.post("/", async (req, res) => {
+router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 10 }]), async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    const { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating } = req.body;
+
+    // Handle main image
+    let imagePath = req.body.image || "";
+    if (req.files && req.files.image && req.files.image[0]) {
+      const protocol = req.protocol;
+      const host = req.get("host");
+      imagePath = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+    }
+
+    // Handle gallery images
+    let galleryImages = [];
+    if (req.body.images) {
+      galleryImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    }
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      const protocol = req.protocol;
+      const host = req.get("host");
+      galleryImages = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+    }
+
+    const product = await Product.create({
+      name,
+      slug,
+      image: imagePath,
+      images: galleryImages,
+      mrp,
+      price,
+      discount,
+      stock,
+      status,
+      category,
+      desc,
+      productDetails,
+      author,
+      rating,
+    });
     res.status(201).json(product);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -51,9 +88,31 @@ router.delete("/:id", async (req, res) => {
 });
 
 // UPDATE PRODUCT
-router.put("/:id", async (req, res) => {
+router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 10 }]), async (req, res) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating } = req.body;
+
+    const updateData = { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating };
+
+    // Handle main image
+    if (req.files && req.files.image && req.files.image[0]) {
+      const protocol = req.protocol;
+      const host = req.get("host");
+      updateData.image = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+    } else if (req.body.image) {
+      updateData.image = req.body.image;
+    }
+
+    // Handle gallery images
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      const protocol = req.protocol;
+      const host = req.get("host");
+      updateData.images = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+    } else if (req.body.images) {
+      updateData.images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    }
+
+    const updated = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
     });
     res.json(updated);

@@ -8,6 +8,7 @@ import adminUser from "./models/AdminUser.js";
 import adminUserRoutes from "./routes/dashboardUsers.js";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import multer from "multer";
 // USER SIDE ROUTES
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
