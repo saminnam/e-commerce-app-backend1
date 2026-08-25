@@ -5,6 +5,7 @@ import { createBlog, getBlogs, getSingleBlog, updateBlog, deleteBlog } from "../
 const router = express.Router();
 
 // The order MUST be: Auth -> Multer -> Controller
+// Make file upload optional to support image URLs
 router.post("/", upload.single("image"), createBlog);
 router.get("/", getBlogs);
 router.get("/:slug", getSingleBlog);

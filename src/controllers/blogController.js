@@ -20,7 +20,16 @@ export const createBlog = async (req, res) => {
     // Handle image
     let image = req.body.image || "";
     if (req.file) {
-      image = `${baseUrl}/uploads/${req.file.filename}`;
+      // Check if running in serverless environment (memory storage)
+      if (req.file.buffer) {
+        // In serverless, we need to handle the file differently
+        // For now, just use the image URL from the body if provided
+        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
+        image = req.body.image || "";
+      } else {
+        // Local development: use disk storage
+        image = `${baseUrl}/uploads/${req.file.filename}`;
+      }
     }
 
     const blog = await Blog.create({
@@ -81,7 +90,16 @@ export const updateBlog = async (req, res) => {
     // Handle image
     let image = req.body.image || existingBlog.image;
     if (req.file) {
-      image = `${baseUrl}/uploads/${req.file.filename}`;
+      // Check if running in serverless environment (memory storage)
+      if (req.file.buffer) {
+        // In serverless, we need to handle the file differently
+        // For now, just use the image URL from the body if provided
+        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
+        image = req.body.image || existingBlog.image;
+      } else {
+        // Local development: use disk storage
+        image = `${baseUrl}/uploads/${req.file.filename}`;
+      }
     }
 
     const updateData = { ...req.body, image };
