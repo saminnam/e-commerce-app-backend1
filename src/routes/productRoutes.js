@@ -12,9 +12,18 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
     // Handle main image
     let imagePath = req.body.image || "";
     if (req.files && req.files.image && req.files.image[0]) {
-      const protocol = req.protocol;
-      const host = req.get("host");
-      imagePath = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+      // Check if running in serverless environment (memory storage)
+      if (req.files.image[0].buffer) {
+        // In serverless, we need to handle the file differently
+        // For now, just use the image URL from the body if provided
+        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
+        imagePath = req.body.image || "";
+      } else {
+        // Local development: use disk storage
+        const protocol = req.protocol;
+        const host = req.get("host");
+        imagePath = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+      }
     }
 
     // Handle gallery images
@@ -23,9 +32,18 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
       galleryImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
     }
     if (req.files && req.files.images && req.files.images.length > 0) {
-      const protocol = req.protocol;
-      const host = req.get("host");
-      galleryImages = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+      // Check if running in serverless environment (memory storage)
+      if (req.files.images[0].buffer) {
+        // In serverless, we need to handle the file differently
+        // For now, just use the image URLs from the body if provided
+        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
+        galleryImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+      } else {
+        // Local development: use disk storage
+        const protocol = req.protocol;
+        const host = req.get("host");
+        galleryImages = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+      }
     }
 
     const product = await Product.create({
@@ -96,18 +114,36 @@ router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }, { name: "image
 
     // Handle main image
     if (req.files && req.files.image && req.files.image[0]) {
-      const protocol = req.protocol;
-      const host = req.get("host");
-      updateData.image = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+      // Check if running in serverless environment (memory storage)
+      if (req.files.image[0].buffer) {
+        // In serverless, we need to handle the file differently
+        // For now, just use the image URL from the body if provided
+        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
+        updateData.image = req.body.image || updateData.image;
+      } else {
+        // Local development: use disk storage
+        const protocol = req.protocol;
+        const host = req.get("host");
+        updateData.image = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+      }
     } else if (req.body.image) {
       updateData.image = req.body.image;
     }
 
     // Handle gallery images
     if (req.files && req.files.images && req.files.images.length > 0) {
-      const protocol = req.protocol;
-      const host = req.get("host");
-      updateData.images = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+      // Check if running in serverless environment (memory storage)
+      if (req.files.images[0].buffer) {
+        // In serverless, we need to handle the file differently
+        // For now, just use the image URLs from the body if provided
+        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
+        updateData.images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+      } else {
+        // Local development: use disk storage
+        const protocol = req.protocol;
+        const host = req.get("host");
+        updateData.images = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+      }
     } else if (req.body.images) {
       updateData.images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
     }
