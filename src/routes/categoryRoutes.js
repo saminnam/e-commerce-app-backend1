@@ -1,6 +1,7 @@
  import express from "express";
 import Category from "../models/Category.js";
 import upload from "../middleware/upload.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 const router = express.Router();
 
@@ -27,7 +28,37 @@ router.post("/", upload.single("image"), async (req, res) => {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-    const image = req.file?.filename || imageUrl || "";
+    // Get the base URL dynamically from the request - always use HTTPS
+    const protocol = req.secure ? 'https' : 'https';
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    // Handle image - try Cloudinary first
+    let image = imageUrl || "";
+    if (req.file) {
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.file, 'categories');
+        if (cloudinaryUrl) {
+          image = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.file.filename) {
+            image = `${baseUrl}/uploads/${req.file.filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.file.filename) {
+          image = `${baseUrl}/uploads/${req.file.filename}`;
+        }
+      }
+    }
+
+    // Validate image URL - prevent saving invalid paths
+    if (image.includes('/uploads/undefined') || image.includes('/uploads/null')) {
+      image = "";
+    }
 
     const category = await Category.create({
       name: name.trim(),
@@ -56,10 +87,37 @@ router.put("/:id", upload.single("image"), async (req, res) => {
         .replace(/^-+|-+$/g, "");
     }
 
+    // Get the base URL dynamically from the request - always use HTTPS
+    const protocol = req.secure ? 'https' : 'https';
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
+    // Handle image - try Cloudinary first
     if (req.file) {
-      updatePayload.image = req.file.filename;
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.file, 'categories');
+        if (cloudinaryUrl) {
+          updatePayload.image = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.file.filename) {
+            updatePayload.image = `${baseUrl}/uploads/${req.file.filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.file.filename) {
+          updatePayload.image = `${baseUrl}/uploads/${req.file.filename}`;
+        }
+      }
     } else if (imageUrl) {
       updatePayload.image = imageUrl;
+    }
+
+    // Validate image URL - prevent saving invalid paths
+    if (updatePayload.image && (updatePayload.image.includes('/uploads/undefined') || updatePayload.image.includes('/uploads/null'))) {
+      delete updatePayload.image;
     }
 
     const updated = await Category.findByIdAndUpdate(req.params.id, updatePayload, {
