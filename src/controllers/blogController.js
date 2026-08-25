@@ -12,8 +12,8 @@ export const createBlog = async (req, res) => {
       });
     }
 
-    // Get the base URL dynamically from the request
-    const protocol = req.protocol;
+    // Get the base URL dynamically from the request - always use HTTPS
+    const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
 
@@ -30,6 +30,11 @@ export const createBlog = async (req, res) => {
         // Local development: use disk storage
         image = `${baseUrl}/uploads/${req.file.filename}`;
       }
+    }
+    
+    // Validate image URL - prevent saving invalid paths
+    if (image.includes('/uploads/undefined') || image.includes('/uploads/null')) {
+      image = ""; // Clear invalid image paths
     }
 
     const blog = await Blog.create({
@@ -82,8 +87,8 @@ export const updateBlog = async (req, res) => {
       return res.status(404).json({ message: "Blog not found" });
     }
 
-    // Get the base URL dynamically from the request
-    const protocol = req.protocol;
+    // Get the base URL dynamically from the request - always use HTTPS
+    const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
 
@@ -100,6 +105,11 @@ export const updateBlog = async (req, res) => {
         // Local development: use disk storage
         image = `${baseUrl}/uploads/${req.file.filename}`;
       }
+    }
+    
+    // Validate image URL - prevent saving invalid paths
+    if (image.includes('/uploads/undefined') || image.includes('/uploads/null')) {
+      image = existingBlog.image || ""; // Clear invalid image paths, keep existing if available
     }
 
     const updateData = { ...req.body, image };

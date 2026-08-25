@@ -19,11 +19,16 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
         // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
         imagePath = req.body.image || "";
       } else {
-        // Local development: use disk storage
-        const protocol = req.protocol;
+        // Local development: use disk storage - always use HTTPS
+        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
         const host = req.get("host");
         imagePath = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
       }
+    }
+    
+    // Validate image URL - prevent saving invalid paths
+    if (imagePath.includes('/uploads/undefined') || imagePath.includes('/uploads/null')) {
+      imagePath = ""; // Clear invalid image paths
     }
 
     // Handle gallery images
@@ -39,12 +44,17 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
         // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
         galleryImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
       } else {
-        // Local development: use disk storage
-        const protocol = req.protocol;
+        // Local development: use disk storage - always use HTTPS
+        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
         const host = req.get("host");
         galleryImages = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
       }
     }
+    
+    // Validate gallery image URLs - filter out invalid paths
+    galleryImages = galleryImages.filter(img => 
+      !img.includes('/uploads/undefined') && !img.includes('/uploads/null')
+    );
 
     const product = await Product.create({
       name,
@@ -121,13 +131,18 @@ router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }, { name: "image
         // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
         updateData.image = req.body.image || updateData.image;
       } else {
-        // Local development: use disk storage
-        const protocol = req.protocol;
+        // Local development: use disk storage - always use HTTPS
+        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
         const host = req.get("host");
         updateData.image = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
       }
     } else if (req.body.image) {
       updateData.image = req.body.image;
+    }
+    
+    // Validate image URL - prevent saving invalid paths
+    if (updateData.image && (updateData.image.includes('/uploads/undefined') || updateData.image.includes('/uploads/null'))) {
+      delete updateData.image; // Remove invalid image paths
     }
 
     // Handle gallery images
@@ -139,13 +154,20 @@ router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }, { name: "image
         // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
         updateData.images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
       } else {
-        // Local development: use disk storage
-        const protocol = req.protocol;
+        // Local development: use disk storage - always use HTTPS
+        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
         const host = req.get("host");
         updateData.images = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
       }
     } else if (req.body.images) {
       updateData.images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    }
+    
+    // Validate gallery image URLs - filter out invalid paths
+    if (updateData.images) {
+      updateData.images = updateData.images.filter(img => 
+        !img.includes('/uploads/undefined') && !img.includes('/uploads/null')
+      );
     }
 
     const updated = await Product.findByIdAndUpdate(req.params.id, updateData, {
