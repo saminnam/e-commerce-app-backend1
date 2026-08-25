@@ -74,7 +74,16 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
     });
     res.status(201).json(product);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("Product Creation Error:", err.message);
+    console.error("Full Error:", err);
+    res.status(400).json({ 
+      message: err.message,
+      errorType: err.name,
+      details: err.errors ? Object.keys(err.errors).map(key => ({
+        field: key,
+        message: err.errors[key].message
+      })) : null
+    });
   }
 });
 
