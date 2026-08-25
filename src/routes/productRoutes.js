@@ -1,6 +1,7 @@
 import express from "express";
 import Product from "../models/Product.js";
 import upload from "../middleware/upload.js";
+import { uploadToCloudinary, uploadMultipleToCloudinary } from "../utils/cloudinary.js";
 
 const router = express.Router();
 
@@ -9,20 +10,29 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
   try {
     const { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating } = req.body;
 
-    // Handle main image
+    // Handle main image - try Cloudinary first
     let imagePath = req.body.image || "";
     if (req.files && req.files.image && req.files.image[0]) {
-      // Check if running in serverless environment (memory storage)
-      if (req.files.image[0].buffer) {
-        // In serverless, we need to handle the file differently
-        // For now, just use the image URL from the body if provided
-        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
-        imagePath = req.body.image || "";
-      } else {
-        // Local development: use disk storage - always use HTTPS
-        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
-        const host = req.get("host");
-        imagePath = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.files.image[0], 'products');
+        if (cloudinaryUrl) {
+          imagePath = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.files.image[0].filename) {
+            const protocol = req.secure ? 'https' : 'https';
+            const host = req.get("host");
+            imagePath = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.files.image[0].filename) {
+          const protocol = req.secure ? 'https' : 'https';
+          const host = req.get("host");
+          imagePath = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+        }
       }
     }
     
@@ -31,23 +41,32 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
       imagePath = ""; // Clear invalid image paths
     }
 
-    // Handle gallery images
+    // Handle gallery images - try Cloudinary first
     let galleryImages = [];
     if (req.body.images) {
       galleryImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
     }
     if (req.files && req.files.images && req.files.images.length > 0) {
-      // Check if running in serverless environment (memory storage)
-      if (req.files.images[0].buffer) {
-        // In serverless, we need to handle the file differently
-        // For now, just use the image URLs from the body if provided
-        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
-        galleryImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
-      } else {
-        // Local development: use disk storage - always use HTTPS
-        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
-        const host = req.get("host");
-        galleryImages = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+      try {
+        const cloudinaryUrls = await uploadMultipleToCloudinary(req.files.images, 'products');
+        if (cloudinaryUrls.length > 0) {
+          galleryImages = cloudinaryUrls;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.files.images[0].filename) {
+            const protocol = req.secure ? 'https' : 'https';
+            const host = req.get("host");
+            galleryImages = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary multiple upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.files.images[0].filename) {
+          const protocol = req.secure ? 'https' : 'https';
+          const host = req.get("host");
+          galleryImages = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+        }
       }
     }
     
@@ -131,19 +150,28 @@ router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }, { name: "image
 
     const updateData = { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating };
 
-    // Handle main image
+    // Handle main image - try Cloudinary first
     if (req.files && req.files.image && req.files.image[0]) {
-      // Check if running in serverless environment (memory storage)
-      if (req.files.image[0].buffer) {
-        // In serverless, we need to handle the file differently
-        // For now, just use the image URL from the body if provided
-        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
-        updateData.image = req.body.image || updateData.image;
-      } else {
-        // Local development: use disk storage - always use HTTPS
-        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
-        const host = req.get("host");
-        updateData.image = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.files.image[0], 'products');
+        if (cloudinaryUrl) {
+          updateData.image = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.files.image[0].filename) {
+            const protocol = req.secure ? 'https' : 'https';
+            const host = req.get("host");
+            updateData.image = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.files.image[0].filename) {
+          const protocol = req.secure ? 'https' : 'https';
+          const host = req.get("host");
+          updateData.image = `${protocol}://${host}/uploads/${req.files.image[0].filename}`;
+        }
       }
     } else if (req.body.image) {
       updateData.image = req.body.image;
@@ -154,19 +182,28 @@ router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }, { name: "image
       delete updateData.image; // Remove invalid image paths
     }
 
-    // Handle gallery images
+    // Handle gallery images - try Cloudinary first
     if (req.files && req.files.images && req.files.images.length > 0) {
-      // Check if running in serverless environment (memory storage)
-      if (req.files.images[0].buffer) {
-        // In serverless, we need to handle the file differently
-        // For now, just use the image URLs from the body if provided
-        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
-        updateData.images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
-      } else {
-        // Local development: use disk storage - always use HTTPS
-        const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
-        const host = req.get("host");
-        updateData.images = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+      try {
+        const cloudinaryUrls = await uploadMultipleToCloudinary(req.files.images, 'products');
+        if (cloudinaryUrls.length > 0) {
+          updateData.images = cloudinaryUrls;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.files.images[0].filename) {
+            const protocol = req.secure ? 'https' : 'https';
+            const host = req.get("host");
+            updateData.images = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary multiple upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.files.images[0].filename) {
+          const protocol = req.secure ? 'https' : 'https';
+          const host = req.get("host");
+          updateData.images = req.files.images.map(file => `${protocol}://${host}/uploads/${file.filename}`);
+        }
       }
     } else if (req.body.images) {
       updateData.images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];

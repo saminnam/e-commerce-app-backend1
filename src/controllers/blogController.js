@@ -1,4 +1,5 @@
 import Blog from "../models/Blog.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 export const createBlog = async (req, res) => {
   try {
@@ -17,18 +18,25 @@ export const createBlog = async (req, res) => {
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
 
-    // Handle image
+    // Handle image - try Cloudinary first
     let image = req.body.image || "";
     if (req.file) {
-      // Check if running in serverless environment (memory storage)
-      if (req.file.buffer) {
-        // In serverless, we need to handle the file differently
-        // For now, just use the image URL from the body if provided
-        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
-        image = req.body.image || "";
-      } else {
-        // Local development: use disk storage
-        image = `${baseUrl}/uploads/${req.file.filename}`;
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.file, 'blogs');
+        if (cloudinaryUrl) {
+          image = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.file.filename) {
+            image = `${baseUrl}/uploads/${req.file.filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.file.filename) {
+          image = `${baseUrl}/uploads/${req.file.filename}`;
+        }
       }
     }
     
@@ -92,18 +100,25 @@ export const updateBlog = async (req, res) => {
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
 
-    // Handle image
+    // Handle image - try Cloudinary first
     let image = req.body.image || existingBlog.image;
     if (req.file) {
-      // Check if running in serverless environment (memory storage)
-      if (req.file.buffer) {
-        // In serverless, we need to handle the file differently
-        // For now, just use the image URL from the body if provided
-        // TODO: Integrate cloud storage (Cloudinary, Vercel Blob, etc.)
-        image = req.body.image || existingBlog.image;
-      } else {
-        // Local development: use disk storage
-        image = `${baseUrl}/uploads/${req.file.filename}`;
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.file, 'blogs');
+        if (cloudinaryUrl) {
+          image = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.file.filename) {
+            image = `${baseUrl}/uploads/${req.file.filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.file.filename) {
+          image = `${baseUrl}/uploads/${req.file.filename}`;
+        }
       }
     }
     
