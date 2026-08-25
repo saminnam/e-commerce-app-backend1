@@ -1,4 +1,5 @@
 import OfferHeroSlide from "../models/OfferHeroSlide.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 export const getAllOfferHeroSlides = async (req, res) => {
   try {
@@ -28,18 +29,39 @@ export const createOfferHeroSlide = async (req, res) => {
 
     const { title, subTitle, order, status, img: imgUrl } = req.body;
 
-    // Get the base URL dynamically from the request
-    const protocol = req.protocol;
+    // Get the base URL dynamically from the request - always use HTTPS
+    const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
 
-    // Handle image
+    // Handle image - try Cloudinary first
     let img = imgUrl || "";
     if (req.file) {
-      img = `${baseUrl}/uploads/${req.file.filename}`;
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.file, 'offer-hero-slides');
+        if (cloudinaryUrl) {
+          img = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.file.filename) {
+            img = `${baseUrl}/uploads/${req.file.filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.file.filename) {
+          img = `${baseUrl}/uploads/${req.file.filename}`;
+        }
+      }
     }
 
     console.log("Final img:", img);
+
+    // Validate image URL - prevent saving invalid paths
+    if (img.includes('/uploads/undefined') || img.includes('/uploads/null')) {
+      img = "";
+    }
 
     const slide = await OfferHeroSlide.create({
       title,
@@ -64,18 +86,39 @@ export const updateOfferHeroSlide = async (req, res) => {
 
     const { title, subTitle, order, status, img: imgUrl } = req.body;
 
-    // Get the base URL dynamically from the request
-    const protocol = req.protocol;
+    // Get the base URL dynamically from the request - always use HTTPS
+    const protocol = req.secure ? 'https' : 'https'; // Force HTTPS
     const host = req.get("host");
     const baseUrl = `${protocol}://${host}`;
 
-    // Handle image
+    // Handle image - try Cloudinary first
     let img = imgUrl || "";
     if (req.file) {
-      img = `${baseUrl}/uploads/${req.file.filename}`;
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(req.file, 'offer-hero-slides');
+        if (cloudinaryUrl) {
+          img = cloudinaryUrl;
+        } else {
+          // Fallback to local disk storage if Cloudinary fails
+          if (req.file.filename) {
+            img = `${baseUrl}/uploads/${req.file.filename}`;
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error('Cloudinary upload failed, using fallback:', cloudinaryError);
+        // Fallback to local disk storage
+        if (req.file.filename) {
+          img = `${baseUrl}/uploads/${req.file.filename}`;
+        }
+      }
     }
 
     console.log("Final img:", img);
+
+    // Validate image URL - prevent saving invalid paths
+    if (img.includes('/uploads/undefined') || img.includes('/uploads/null')) {
+      img = "";
+    }
 
     const slide = await OfferHeroSlide.findByIdAndUpdate(
       req.params.id,
