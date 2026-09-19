@@ -15,11 +15,13 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, required: true },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     desc: String,
+    descriptions: [{ type: String }],
     productDetails: String,
     category: { type: String, required: true },
     author: String,
     publisher: String,
     releasedDate: String,
+    productCode: { type: String, unique: true, sparse: true },
   },
   { timestamps: true }
 );

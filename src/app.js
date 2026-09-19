@@ -66,6 +66,7 @@ app.use((err, req, res, next) => {
   next();
 });
 
+
 // Compression middleware to reduce response size
 app.use(compression());
 

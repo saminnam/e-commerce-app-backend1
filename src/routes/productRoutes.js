@@ -8,7 +8,7 @@ const router = express.Router();
 // CREATE PRODUCT
 router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 10 }]), async (req, res) => {
   try {
-    const { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating } = req.body;
+    const { name, slug, mrp, price, discount, stock, status, category, desc, descriptions, productDetails, author, rating, productCode } = req.body;
 
     // Handle main image - try Cloudinary first
     let imagePath = req.body.image || "";
@@ -87,9 +87,11 @@ router.post("/", upload.fields([{ name: "image", maxCount: 1 }, { name: "images"
       status,
       category,
       desc,
+      descriptions: descriptions ? JSON.parse(descriptions) : [],
       productDetails,
       author,
       rating,
+      productCode,
     });
     res.status(201).json(product);
   } catch (err) {
@@ -146,9 +148,17 @@ router.delete("/:id", async (req, res) => {
 // UPDATE PRODUCT
 router.put("/:id", upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 10 }]), async (req, res) => {
   try {
-    const { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating } = req.body;
+    const { name, slug, mrp, price, discount, stock, status, category, desc, descriptions, productDetails, author, rating, productCode } = req.body;
 
     const updateData = { name, slug, mrp, price, discount, stock, status, category, desc, productDetails, author, rating };
+    
+    if (descriptions) {
+      updateData.descriptions = JSON.parse(descriptions);
+    }
+    
+    if (productCode !== undefined) {
+      updateData.productCode = productCode;
+    }
 
     // Handle main image - try Cloudinary first
     if (req.files && req.files.image && req.files.image[0]) {
