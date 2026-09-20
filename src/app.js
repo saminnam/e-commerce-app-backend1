@@ -22,6 +22,8 @@ import offerHeroSlideRoutes from "./routes/offerHeroSlideRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import roleRoutes from "./routes/roleRoutes.js";
+import companyInfoRoutes from "./routes/companyInfoRoutes.js";
+import invoiceRoutes from "./routes/invoiceRoutes.js";
 
 // AUTH ROUTES
 import profileRoutes from "./routes/profileRoutes.js";
@@ -135,6 +137,8 @@ app.use("/api/offerHero-slides", offerHeroSlideRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/roles", roleRoutes);
+app.use("/api/company-info", companyInfoRoutes);
+app.use("/api/invoice", invoiceRoutes);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
