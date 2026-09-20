@@ -189,6 +189,12 @@ const generateInvoiceHTML = async (order, companyInfo) => {
           color: #6b7280;
           font-size: 12px;
         }
+        .footer-logo {
+          max-width: 60px;
+          max-height: 60px;
+          object-fit: contain;
+          margin-bottom: 10px;
+        }
         .status-badge {
           display: inline-block;
           padding: 6px 12px;
@@ -208,6 +214,7 @@ const generateInvoiceHTML = async (order, companyInfo) => {
       <div class="invoice-container">
         <div class="header">
           <div class="company-info">
+            ${companyInfo.logo ? `<img src="${companyInfo.logo}" alt="Company Logo" style="max-width: 120px; max-height: 120px; margin-bottom: 10px; object-fit: contain;">` : ''}
             <h1>${companyInfo.companyName}</h1>
             <p>${companyInfo.address}</p>
             <p>${companyInfo.city}, ${companyInfo.state} ${companyInfo.postalCode}</p>
@@ -280,6 +287,7 @@ const generateInvoiceHTML = async (order, companyInfo) => {
         </div>
 
         <div class="footer">
+          ${companyInfo.logo ? `<img src="${companyInfo.logo}" alt="Company Logo" class="footer-logo">` : ''}
           <p>Thank you for your business!</p>
           <p>${companyInfo.companyName} | ${companyInfo.email} | ${companyInfo.phone}</p>
         </div>
