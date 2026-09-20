@@ -14,15 +14,25 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "No products found" });
     }
 
+    // Validate and format product data
+    const formattedProducts = products.map(p => ({
+      productId: p.productId,
+      quantity: p.quantity,
+      price: p.price
+    }));
+
     const order = new Order({
       customer,
       shippingAddress,
-      products,
+      products: formattedProducts,
       totalAmount,
-      totalProducts: products.length,
+      totalProducts: formattedProducts.length,
     });
 
     await order.save();
+
+    // Populate product details before returning
+    const populatedOrder = await Order.findById(order._id).populate("products.productId");
 
     await Notification.create({
       title: "New order received",
@@ -36,7 +46,7 @@ router.post("/", async (req, res) => {
       },
     });
 
-    res.status(201).json(order); // returns full order with customer info
+    res.status(201).json(populatedOrder); // returns full order with product details
   } catch (error) {
     console.error("ORDER SAVE ERROR 👉", error);
     res.status(500).json({ success: false, message: error.message });
@@ -45,13 +55,16 @@ router.post("/", async (req, res) => {
 
 // GET ALL ORDERS (Admin)
 router.get("/", async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 });
+  const orders = await Order.find()
+    .populate("products.productId")
+    .sort({ createdAt: -1 });
   res.json(orders);
 });
 
 // GET SINGLE ORDER (Admin)
 router.get("/:id", async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id)
+    .populate("products.productId");
   res.json(order);
 });
 // Helper to send email
