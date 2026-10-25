@@ -7,8 +7,26 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const categories = await Category.find().sort({ createdAt: -1 });
-    res.json(categories);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const categories = await Category.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Category.countDocuments();
+
+    res.json({
+      categories,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total,
+        limit,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
