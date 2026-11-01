@@ -11,22 +11,29 @@ router.get("/", async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const categories = await Category.find()
-      .sort({ order: 1, createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // If pagination params are provided, use pagination
+    if (req.query.page || req.query.limit) {
+      const categories = await Category.find()
+        .sort({ order: 1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
 
-    const total = await Category.countDocuments();
+      const total = await Category.countDocuments();
 
-    res.json({
-      categories,
-      pagination: {
-        current: page,
-        pages: Math.ceil(total / limit),
-        total,
-        limit,
-      },
-    });
+      res.json({
+        categories,
+        pagination: {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total,
+          limit,
+        },
+      });
+    } else {
+      // Return all categories without pagination
+      const categories = await Category.find().sort({ order: 1, createdAt: -1 });
+      res.json(categories);
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -91,6 +98,29 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
+// Update category order
+router.put("/reorder", async (req, res) => {
+  try {
+    const { categories } = req.body;
+
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({ message: "Invalid categories data" });
+    }
+
+    // Update each category's order
+    const updatePromises = categories.map((cat) =>
+      Category.findByIdAndUpdate(cat._id, { order: cat.order }, { new: true })
+    );
+
+    await Promise.all(updatePromises);
+
+    res.json({ message: "Categories reordered successfully" });
+  } catch (error) {
+    console.error("Reorder error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Update category (supports image upload OR image URL)
 router.put("/:id", upload.single("image"), async (req, res) => {
   try {
@@ -152,28 +182,6 @@ router.delete("/:id", async (req, res) => {
   try {
     await Category.findByIdAndDelete(req.params.id);
     res.json({ message: "Category deleted" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Update category order
-router.put("/reorder", async (req, res) => {
-  try {
-    const { categories } = req.body;
-
-    if (!Array.isArray(categories)) {
-      return res.status(400).json({ message: "Invalid categories data" });
-    }
-
-    // Update each category's order
-    const updatePromises = categories.map((cat) =>
-      Category.findByIdAndUpdate(cat._id, { order: cat.order }, { new: true })
-    );
-
-    await Promise.all(updatePromises);
-
-    res.json({ message: "Categories reordered successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
