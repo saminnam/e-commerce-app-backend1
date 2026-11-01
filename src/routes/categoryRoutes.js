@@ -12,7 +12,7 @@ router.get("/", async (req, res) => {
     const skip = (page - 1) * limit;
 
     const categories = await Category.find()
-      .sort({ createdAt: -1 })
+      .sort({ order: 1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
@@ -152,6 +152,28 @@ router.delete("/:id", async (req, res) => {
   try {
     await Category.findByIdAndDelete(req.params.id);
     res.json({ message: "Category deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update category order
+router.put("/reorder", async (req, res) => {
+  try {
+    const { categories } = req.body;
+
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({ message: "Invalid categories data" });
+    }
+
+    // Update each category's order
+    const updatePromises = categories.map((cat) =>
+      Category.findByIdAndUpdate(cat._id, { order: cat.order }, { new: true })
+    );
+
+    await Promise.all(updatePromises);
+
+    res.json({ message: "Categories reordered successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

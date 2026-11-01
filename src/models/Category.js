@@ -23,6 +23,11 @@ const categorySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Display order for categories
+    order: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
